@@ -10,7 +10,7 @@ Portfolio.Contact is a Contact-Me Microservice that allows users who navigate to
 
 The process of this microservice is shown in the below diagram:
 
-![Portfolio.Contact process]()
+![Portfolio.Contact process](https://github.com/willvelida/Portfolio.Contact/blob/feature/initalCut/process.PNG)
 
 1. User sends JSON payload via contact form on website, invoking the Contact API endpoint.
 2. JSON payload is converted into a SendGridMessage object.
