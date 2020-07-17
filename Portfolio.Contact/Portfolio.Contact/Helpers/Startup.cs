@@ -24,7 +24,6 @@ namespace Portfolio.Contact.Helpers
 
             builder.Services.AddSingleton<IConfiguration>(config);
 
-            // TODO: Get API Key
             builder.Services.AddSingleton((s) => new SendGridClient(config["SendGridAPIKey"]));
         }
     }
