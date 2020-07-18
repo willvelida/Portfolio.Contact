@@ -43,7 +43,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
         }       
 
         [Fact]
-        public async Task SendValidEmail()
+        public async Task ReturnOkResultWhenSuccessful()
         {
             // ARRANGE
             var mockedOutgoingMessageRequestBody = new OutgoingEmailMessage
@@ -70,21 +70,56 @@ namespace Portfolio.Contact.Tests.FunctionTests
         }
 
         [Fact]
-        public void ConvertRequestToOutGoingMessagePOCO()
-        {
-
-        }
-
-        [Fact]
         public async Task ThrowBadRequestWhenInvalid()
         {
+            // ARRANGE
+            var mockedOutgoingMessageRequestBody = new OutgoingEmailMessage
+            {
+                SenderName = "TestName",
+                SenderEmail = null,
+                EmailSubject = "TestEmail",
+                EmailBody = "This is a test email"
+            };
 
+            var mockedResponse = new Response(System.Net.HttpStatusCode.BadRequest, It.IsAny<HttpContent>(), It.IsAny<HttpResponseHeaders>());
+
+            byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
+            MemoryStream stream = new MemoryStream(byteArray);
+            _httpRequestMock.Setup(r => r.Body).Returns(stream);
+            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockedResponse);
+
+            // ACT
+            var response = await _func.Run(_httpRequestMock.Object);
+
+            // ASSERT
+            Assert.Equal(typeof(BadRequestResult), response.GetType());
         }
 
         [Fact]
         public async Task ReturnInternalServerError()
         {
+            var mockedOutgoingMessageRequestBody = new OutgoingEmailMessage
+            {
+                SenderName = "TestName",
+                SenderEmail = "testuser@mail.com",
+                EmailSubject = "TestEmail",
+                EmailBody = "This is a test email"
+            };
+            
+            byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
+            MemoryStream stream = new MemoryStream(byteArray);
+            _httpRequestMock.Setup(r => r.Body).Returns(stream);
+            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(It.IsAny<Exception>());
 
+            // ACT
+            var response = await _func.Run(_httpRequestMock.Object);
+
+            // ASSERT
+            Assert.Equal(typeof(StatusCodeResult), response.GetType());
+            var responseStatusCode = (StatusCodeResult)response;
+            Assert.Equal(500, responseStatusCode.StatusCode);
         }
     }
 }
