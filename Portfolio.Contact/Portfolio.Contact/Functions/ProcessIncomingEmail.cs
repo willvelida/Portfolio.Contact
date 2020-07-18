@@ -18,12 +18,12 @@ namespace Portfolio.Contact.Functions
     {
         private readonly ILogger<ProcessIncomingEmail> _logger;
         private readonly IConfiguration _config;
-        private readonly SendGridClient _sendGridClient;
+        private readonly ISendGridClient _sendGridClient;
 
         public ProcessIncomingEmail(
             ILogger<ProcessIncomingEmail> logger,
             IConfiguration config,
-            SendGridClient sendGridClient)
+            ISendGridClient sendGridClient)
         {
             _logger = logger;
             _config = config;
@@ -66,11 +66,11 @@ namespace Portfolio.Contact.Functions
 
                 if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
-                    result = new StatusCodeResult(StatusCodes.Status400BadRequest);
+                    result = new BadRequestResult();
                 }
                 else
                 {
-                    result = new StatusCodeResult(StatusCodes.Status200OK);
+                    result = new OkResult();
                 }               
             }
             catch (Exception ex)

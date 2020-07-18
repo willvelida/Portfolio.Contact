@@ -12,6 +12,8 @@ using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,8 +25,10 @@ namespace Portfolio.Contact.Tests.FunctionTests
     {
         Mock<ILogger<ProcessIncomingEmail>> _loggerMock;
         Mock<IConfiguration> _configMock;
-        Mock<SendGridClient> _sendGridMock;
+        Mock<ISendGridClient> _sendGridMock;
         Mock<HttpRequest> _httpRequestMock;
+
+        private ProcessIncomingEmail _func;
 
         public ProcessIncomingEmailShould()
         {
@@ -32,9 +36,11 @@ namespace Portfolio.Contact.Tests.FunctionTests
             _configMock = new Mock<IConfiguration>();
             _configMock.Setup(x => x["RecipientEmail"]).Returns("test@test.com");
             _configMock.Setup(x => x["SendGridAPIKey"]).Returns("key");
-            _sendGridMock = new Mock<SendGridClient>(MockBehavior.Strict);
+            _sendGridMock = new Mock<ISendGridClient>(MockBehavior.Strict);
             _httpRequestMock = new Mock<HttpRequest>();
-        }
+
+            _func = new ProcessIncomingEmail(_loggerMock.Object, _configMock.Object, _sendGridMock.Object);
+        }       
 
         [Fact]
         public async Task SendValidEmail()
@@ -48,18 +54,19 @@ namespace Portfolio.Contact.Tests.FunctionTests
                 EmailBody = "This is a test email"
             };
 
+            var mockedResponse = new Response(System.Net.HttpStatusCode.OK, It.IsAny<HttpContent>(), It.IsAny<HttpResponseHeaders>());
+
             byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
             MemoryStream stream = new MemoryStream(byteArray);
             _httpRequestMock.Setup(r => r.Body).Returns(stream);
-            
-
-            var sendEmail = new ProcessIncomingEmail(_loggerMock.Object, _configMock.Object, _sendGridMock.Object);
+            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockedResponse);
 
             // ACT
-            var response = await sendEmail.Run(_httpRequestMock.Object);
+            var response = await _func.Run(_httpRequestMock.Object);
 
             // ASSERT
-            _sendGridMock.Verify(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.Equal(typeof(OkResult), response.GetType());
         }
 
         [Fact]
@@ -76,12 +83,6 @@ namespace Portfolio.Contact.Tests.FunctionTests
 
         [Fact]
         public async Task ReturnInternalServerError()
-        {
-
-        }
-
-        [Fact]
-        public async Task ReturnOkStatus()
         {
 
         }
