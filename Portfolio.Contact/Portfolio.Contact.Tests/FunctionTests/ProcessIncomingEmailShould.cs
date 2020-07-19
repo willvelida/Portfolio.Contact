@@ -6,6 +6,7 @@ using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
 using Portfolio.Contact.Functions;
+using Portfolio.Contact.Mappers;
 using Portfolio.Contact.Models;
 using Portfolio.Contact.Repositories;
 using SendGrid;
@@ -26,6 +27,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
     {
         Mock<ILogger<ProcessIncomingEmail>> _loggerMock;
         Mock<IConfiguration> _configMock;
+        Mock<ISendGridMessageMapper> _sendGridMapperMock;
         Mock<ISendGridRepository> _sendGridRepoMock;
         Mock<HttpRequest> _httpRequestMock;
 
@@ -34,13 +36,14 @@ namespace Portfolio.Contact.Tests.FunctionTests
         public ProcessIncomingEmailShould()
         {
             _loggerMock = new Mock<ILogger<ProcessIncomingEmail>>();
-            _configMock = new Mock<IConfiguration>();
-            _configMock.Setup(x => x["RecipientEmail"]).Returns("test@test.com");
-            _configMock.Setup(x => x["SendGridAPIKey"]).Returns("key");
+            //_configMock = new Mock<IConfiguration>();
+            //_configMock.Setup(x => x["RecipientEmail"]).Returns("test@test.com");
+            //_configMock.Setup(x => x["SendGridAPIKey"]).Returns("key");
+            _sendGridMapperMock = new Mock<ISendGridMessageMapper>();
             _sendGridRepoMock = new Mock<ISendGridRepository>();
             _httpRequestMock = new Mock<HttpRequest>();
 
-            _func = new ProcessIncomingEmail(_loggerMock.Object, _configMock.Object, _sendGridRepoMock.Object);
+            _func = new ProcessIncomingEmail(_loggerMock.Object, _sendGridMapperMock.Object, _sendGridRepoMock.Object);
         }       
 
         [Fact]
