@@ -7,6 +7,7 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using Portfolio.Contact.Functions;
 using Portfolio.Contact.Models;
+using Portfolio.Contact.Repositories;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -25,7 +26,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
     {
         Mock<ILogger<ProcessIncomingEmail>> _loggerMock;
         Mock<IConfiguration> _configMock;
-        Mock<ISendGridClient> _sendGridMock;
+        Mock<ISendGridRepository> _sendGridRepoMock;
         Mock<HttpRequest> _httpRequestMock;
 
         private ProcessIncomingEmail _func;
@@ -36,10 +37,10 @@ namespace Portfolio.Contact.Tests.FunctionTests
             _configMock = new Mock<IConfiguration>();
             _configMock.Setup(x => x["RecipientEmail"]).Returns("test@test.com");
             _configMock.Setup(x => x["SendGridAPIKey"]).Returns("key");
-            _sendGridMock = new Mock<ISendGridClient>(MockBehavior.Strict);
+            _sendGridRepoMock = new Mock<ISendGridRepository>();
             _httpRequestMock = new Mock<HttpRequest>();
 
-            _func = new ProcessIncomingEmail(_loggerMock.Object, _configMock.Object, _sendGridMock.Object);
+            _func = new ProcessIncomingEmail(_loggerMock.Object, _configMock.Object, _sendGridRepoMock.Object);
         }       
 
         [Fact]
@@ -59,7 +60,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
             byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
             MemoryStream stream = new MemoryStream(byteArray);
             _httpRequestMock.Setup(r => r.Body).Returns(stream);
-            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+            _sendGridRepoMock.Setup(x => x.SendEmail(It.IsAny<SendGridMessage>()))
                 .ReturnsAsync(mockedResponse);
 
             // ACT
@@ -86,7 +87,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
             byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
             MemoryStream stream = new MemoryStream(byteArray);
             _httpRequestMock.Setup(r => r.Body).Returns(stream);
-            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+            _sendGridRepoMock.Setup(x => x.SendEmail(It.IsAny<SendGridMessage>()))
                 .ReturnsAsync(mockedResponse);
 
             // ACT
@@ -110,7 +111,7 @@ namespace Portfolio.Contact.Tests.FunctionTests
             byte[] byteArray = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(mockedOutgoingMessageRequestBody));
             MemoryStream stream = new MemoryStream(byteArray);
             _httpRequestMock.Setup(r => r.Body).Returns(stream);
-            _sendGridMock.Setup(x => x.SendEmailAsync(It.IsAny<SendGridMessage>(), It.IsAny<CancellationToken>()))
+            _sendGridRepoMock.Setup(x => x.SendEmail(It.IsAny<SendGridMessage>()))
                 .ThrowsAsync(It.IsAny<Exception>());
 
             // ACT

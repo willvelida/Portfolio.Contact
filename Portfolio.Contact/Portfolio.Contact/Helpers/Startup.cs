@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Portfolio.Contact.Helpers;
+using Portfolio.Contact.Repositories;
 using SendGrid;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,9 @@ namespace Portfolio.Contact.Helpers
                 .Build();
 
             builder.Services.AddSingleton<IConfiguration>(config);
-
+           
             builder.Services.AddSingleton((s) => new SendGridClient(config["SendGridAPIKey"]));
+            builder.Services.AddSingleton<ISendGridRepository, SendGridRepository>();
         }
     }
 }

@@ -11,6 +11,7 @@ using SendGrid;
 using Portfolio.Contact.Models;
 using SendGrid.Helpers.Mail;
 using Microsoft.Extensions.Configuration;
+using Portfolio.Contact.Repositories;
 
 namespace Portfolio.Contact.Functions
 {
@@ -18,16 +19,16 @@ namespace Portfolio.Contact.Functions
     {
         private readonly ILogger<ProcessIncomingEmail> _logger;
         private readonly IConfiguration _config;
-        private readonly ISendGridClient _sendGridClient;
+        private readonly ISendGridRepository _sendGridRepository;
 
         public ProcessIncomingEmail(
             ILogger<ProcessIncomingEmail> logger,
             IConfiguration config,
-            ISendGridClient sendGridClient)
+            ISendGridRepository sendGridRepository)
         {
             _logger = logger;
             _config = config;
-            _sendGridClient = sendGridClient;
+            _sendGridRepository = sendGridRepository;
         }
 
         [FunctionName(nameof(ProcessIncomingEmail))]
@@ -62,7 +63,7 @@ namespace Portfolio.Contact.Functions
                 message.AddTo(_config["RecipientEmail"]);
 
                 // Process response
-                var response = await _sendGridClient.SendEmailAsync(message);
+                var response = await _sendGridRepository.SendEmail(message);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
