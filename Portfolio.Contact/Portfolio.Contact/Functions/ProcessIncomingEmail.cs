@@ -12,22 +12,23 @@ using Portfolio.Contact.Models;
 using SendGrid.Helpers.Mail;
 using Microsoft.Extensions.Configuration;
 using Portfolio.Contact.Repositories;
+using Portfolio.Contact.Mappers;
 
 namespace Portfolio.Contact.Functions
 {
     public class ProcessIncomingEmail
     {
         private readonly ILogger<ProcessIncomingEmail> _logger;
-        private readonly IConfiguration _config;
+        private readonly ISendGridMessageMapper _sendGridMessageMapper;
         private readonly ISendGridRepository _sendGridRepository;
 
         public ProcessIncomingEmail(
             ILogger<ProcessIncomingEmail> logger,
-            IConfiguration config,
+            ISendGridMessageMapper sendGridMessageMapper,
             ISendGridRepository sendGridRepository)
         {
             _logger = logger;
-            _config = config;
+            _sendGridMessageMapper = sendGridMessageMapper;
             _sendGridRepository = sendGridRepository;
         }
 
@@ -39,30 +40,10 @@ namespace Portfolio.Contact.Functions
 
             try
             {
-                // Parse the incoming message into a Outgoing message object
                 string messageRequest = await new StreamReader(req.Body).ReadToEndAsync();
 
-                var input = JsonConvert.DeserializeObject<OutgoingEmailMessage>(messageRequest);
+                var message = _sendGridMessageMapper.MapRequestToMessage(messageRequest);
 
-                var outgoingEmail = new OutgoingEmailMessage
-                {
-                    SenderName = input.SenderName,
-                    SenderEmail = input.SenderEmail,
-                    EmailSubject = input.EmailSubject,
-                    EmailBody = input.EmailBody
-                };
-
-                // Send the parsed message to SendGrid Client
-                var message = new SendGridMessage()
-                {
-                    From = new EmailAddress(outgoingEmail.SenderEmail, outgoingEmail.SenderName),
-                    Subject = outgoingEmail.EmailSubject,
-                    PlainTextContent = outgoingEmail.EmailBody,
-                    HtmlContent = outgoingEmail.EmailBody,
-                };
-                message.AddTo(_config["RecipientEmail"]);
-
-                // Process response
                 var response = await _sendGridRepository.SendEmail(message);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
